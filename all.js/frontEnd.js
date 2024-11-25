@@ -286,84 +286,94 @@ import {base_url,api_path} from './config.js';
         
     //9.送出表單資料
     const orderInfoForm = document.querySelector('.orderInfo-form');
-    function formCheck(){
+    function formCheck() {
         const constraints = {
             姓名: {
-              presence: { message: "^必填" },
+                presence: { message: "^必填" },
             },
             電話: {
-              presence: { message: "^必填" },
+                presence: { message: "^必填" },
             },
             Email: {
-              presence: { message: "^必填" },
-              email: { message: "^請輸入正確的信箱格式" },
+                presence: { message: "^必填" },
+                email: { message: "^請輸入正確的信箱格式" },
             },
             寄送地址: {
-              presence: { message: "^必填" },
+                presence: { message: "^必填" },
             },
-          };
-        const error = validate(orderInfoForm,constraints);
-        console.log(error);
+        };
+        const error = validate(orderInfoForm, constraints);
+        if (error) {
+                alert('必填欄位請記得填寫！');
+        }
         return error;
     }
 
     const orderInfoBtn = document.querySelector('.orderInfo-btn');
-        function sendOrder(){
-            if(cartData.length === 0){
-                alert("購物車目前無任何商品");
-                return;
-            }
-            if(formCheck()){
-                alert("必填欄位需填寫完整");
-                return;
-            }
-            const customerName = document.querySelector("#customerName");
-            const customerPhone = document.querySelector("#customerPhone");
-            const customerEmail = document.querySelector("#customerEmail");
-            const customerAddress = document.querySelector("#customerAddress");
-            const tradeWay = document.querySelector("#tradeWay");
-            
-            const data = {
-              data: {
+    function sendOrder() {
+        if (cartData.length === 0) {
+            alert("購物車目前無任何商品");
+            return;
+        }
+        if (formCheck()) {
+            return;
+        }
+    
+        const customerName = document.querySelector("#customerName");
+        const customerPhone = document.querySelector("#customerPhone");
+        const customerEmail = document.querySelector("#customerEmail");
+        const customerAddress = document.querySelector("#customerAddress");
+        const tradeWay = document.querySelector("#tradeWay");
+    
+        const data = {
+            data: {
                 user: {
-                  name: customerName.value.trim(),
-                  tel: customerPhone.value.trim(),
-                  email: customerEmail.value.trim(),
-                  address: customerAddress.value.trim(),
-                  payment: tradeWay.value,
+                    name: customerName.value.trim(),
+                    tel: customerPhone.value.trim(),
+                    email: customerEmail.value.trim(),
+                    address: customerAddress.value.trim(),
+                    payment: tradeWay.value,
                 },
-              },
-            };    
-    axios.post(`${base_url}${api_path}/orders`, data)
-    .then(res =>{
-        console.log(res);
-        orderInfoForm.reset();
-    }).catch(err =>{    
-        // console.log(err.response); 
-    })   
-}
+            },
+        };
+    
+        axios.post(`${base_url}${api_path}/orders`, data)
+            .then(res => {
+                console.log(res);
+                orderInfoForm.reset();
+                confirmclearBtn(); // 訂單成功後清空購物車
+            })
+            .catch(err => {
+                console.error(err.response);
+            });
+    }
     orderInfoBtn.addEventListener('click', (e) => {
     e.preventDefault();
     sendOrder(); // 如果表单验证通过，执行发送订单
-    confirmclearBtn(); // 清空購物車    
     });
     
     //10.單獨刪除表單送出後清除購物車內的商品函數
     function confirmclearBtn() {
-    axios.delete(`${base_url}${api_path}/carts`)
-    .then((res) => {
-        console.log("All items deleted:", res);
-        cartData = []; // 更新購物車內數據
-        renderCart(); //  重新渲染購物車
-        Swal.fire({
-            title: "已完成!",
-            text: "訂單成立，感謝您的訂購！",
-            icon: "success"
-        });
-    }).catch((err) => {
-        console.log(err);
-    });
-}
+        axios.delete(`${base_url}${api_path}/carts`)
+            .then((res) => {
+                console.log("All items deleted:", res);
+                cartData = []; // 更新購物車內數據
+                renderCart(); // 重新渲染購物車
+                Swal.fire({
+                    title: "已完成!",
+                    text: "訂單成立，感謝您的訂購！",
+                    icon: "success"
+                });
+            })
+            .catch((err) => {
+                console.error("清空購物車失敗:", err);
+                Swal.fire({
+                    title: "錯誤!",
+                    text: "清空購物車失敗，請稍後再試。",
+                    icon: "error"
+                });
+            });
+    }
     //初始化  備註:可能會有多個函式需要初始化，可寫在初始化函式中集中管理維護。
     function init(){
         getProduct();
